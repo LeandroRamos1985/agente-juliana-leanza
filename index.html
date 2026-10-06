@@ -138,7 +138,7 @@ ul,ol{list-style:none}
   <header class="top">
     <div>
       <h1>Atendimento da Nutri Juliana Leanza</h1>
-      <p>Demonstração de agente de IA: conversa, decide o próximo passo e executa. Acompanhe os bastidores ao lado.</p>
+      <p>Demonstração de agente de IA: tira dúvidas com as informações da Dra. Juliana e só agenda quando o paciente quer.</p>
     </div>
     <div class="top-actions">
       <button class="btn btn-main" type="button" id="auto">Ver um atendimento completo</button>
@@ -154,12 +154,12 @@ ul,ol{list-style:none}
   <div class="main">
 
     <section class="col chat" aria-label="Conversa com o paciente">
-      <div class="col-head"><h2>Conversa com o paciente</h2><p>Escreva como um paciente escreveria, do seu jeito.</p></div>
+      <div class="col-head"><h2>Conversa com o paciente</h2><p>Pergunte o que um paciente perguntaria, do seu jeito.</p></div>
       <div class="log" id="log" role="log" aria-live="polite"></div>
       <div class="quick" id="quick"></div>
       <form class="composer" id="composer" autocomplete="off">
         <label for="campo" style="position:absolute;left:-9999px">Mensagem do paciente</label>
-        <input id="campo" type="text" maxlength="400" enterkeyhint="send" placeholder="Ex.: sou a Carla, treino 5x por semana e quero consulta online">
+        <input id="campo" type="text" maxlength="400" enterkeyhint="send" placeholder="Ex.: a Juliana atende quem usa Mounjaro?">
         <button type="submit" aria-label="Enviar mensagem"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 20.5 21 12 3 3.5v6.6L15 12 3 13.9z"/></svg></button>
       </form>
     </section>
@@ -180,7 +180,7 @@ ul,ol{list-style:none}
 
   </div>
 
-  <p class="rodape">Demonstração. A agenda, a ficha e os avisos são simulados; endereço, formação e formato de atendimento são dados públicos do perfil da Juliana. Valores, horários reais e convênios entram na versão final.</p>
+  <p class="rodape">Demonstração. As respostas usam o que a Juliana publica (Instagram, Google e Linktree). A agenda, a ficha e os avisos são simulados. Valores, convênios e horários entram depois que ela informar.</p>
 </div>
 
 <script>
@@ -216,13 +216,13 @@ ul,ol{list-style:none}
   }
   function botoes(lista) {
     quick.textContent = '';
-    (lista || []).forEach(function (r) { var b = el('button', '', r); b.type = 'button'; b.addEventListener('click', function () { paciente(r); }); quick.appendChild(b); });
+    (lista || []).forEach(function (r) { var b = el('button', '', r); b.type = 'button'; b.addEventListener('click', function () { if (!tocando) { paciente(r); } }); quick.appendChild(b); });
   }
   function dizer(texto, op) {
     op = op || {};
     var dig;
-    passo(250, function () { dig = el('div', 'typing'); dig.innerHTML = '<i></i><i></i><i></i>'; log.appendChild(dig); log.scrollTop = log.scrollHeight; });
-    passo(Math.min(1500, 500 + texto.length * 8), function () {
+    passo(350, function () { dig = el('div', 'typing'); dig.innerHTML = '<i></i><i></i><i></i>'; log.appendChild(dig); log.scrollTop = log.scrollHeight; });
+    passo(Math.min(2200, 700 + texto.length * 9), function () {
       if (dig && dig.parentNode) { dig.parentNode.removeChild(dig); }
       bolha('in', texto, op.link);
       if (op.botoes) { botoes(op.botoes); }
@@ -262,30 +262,101 @@ ul,ol{list-style:none}
     });
   }
 
-  /* ---------- entendimento da mensagem ---------- */
+  /* ---------- base de informações da Dra. Juliana ----------
+     Tudo aqui vem do que ela publica: bio e posts do Instagram, perfil no Google e Linktree. */
+  var BASE = [
+    { id: 'caneta', rot: 'uso de caneta para emagrecer', k: ['mounjaro', 'ozempic', 'wegovy', 'caneta', 'semaglutida', 'tirzepatida', 'remedio para emagrecer', 'remedio pra emagrecer'],
+      fonte: 'post "A caneta tirou sua fome. E agora?"',
+      txt: 'Atende sim, e é um dos assuntos de que a Juliana mais fala. Ela costuma dizer que, quando a caneta tira a fome, o que você come fica ainda mais importante. Na consulta ela organiza a alimentação para essa fase, sempre junto com a prescrição do seu médico.' },
+    { id: 'esporte', rot: 'alimentação e treino', k: ['treino', 'trein', 'crossfit', 'corrida', 'correr', 'muscula', 'hipertrofia', 'performance', 'massa', 'academia', 'esport'],
+      fonte: 'pós em Nutrição Esportiva e post "Você não precisa treinar mais"',
+      txt: 'Sobre treino: a Juliana é pós-graduada em Nutrição Esportiva, então ajustar a alimentação ao treino é bem a área dela. Tem uma frase dela que eu gosto: você não precisa treinar mais, talvez precise comer melhor.' },
+    { id: 'plato', rot: 'emagrecimento travado', k: ['plato', 'travad', 'travou', 'estagn', 'nao emagreco', 'parei de emagrecer', 'nao consigo emagrecer', 'nao perco peso'],
+      fonte: 'posts "Nem todo platô é platô" e "Seu emagrecimento está travado"',
+      txt: 'Isso é mais comum do que parece, e a Juliana tem conteúdo só sobre o tema. Ela explica que nem todo platô é platô: às vezes é a adesão ao plano, às vezes a distribuição dos macronutrientes. É o tipo de coisa que ela investiga com calma na consulta.' },
+    { id: 'emagrecer', rot: 'emagrecimento', k: ['emagrec', 'perder peso', 'perder gordura', 'secar', 'quilos'],
+      fonte: 'bio do Instagram e post "8 ou 80 na dieta?"',
+      txt: 'Emagrecimento é um dos focos da Juliana, e a linha dela é sem 8 ou 80: nutrição real e prática, que cabe na sua rotina. Como ela diz, constância não é sobre perfeição.' },
+    { id: 'fome', rot: 'fome e vontade de doce', k: ['perco o controle', 'descontrol', 'compuls', 'belisc', 'doce', 'ansiedade', 'fome', 'como demais'],
+      fonte: 'posts "Sentir fome virou errado" e "Se à noite você perde o controle com comida"',
+      txt: 'A Juliana fala bastante sobre isso. Para ela, sentir fome não é "errado", e dá para lidar com a fome da noite e com a vontade de doce sem culpa e sem proibir tudo. Ela trabalha isso de forma individual na consulta.' },
+    { id: 'horarios', rot: 'horário das refeições e jejum', k: ['jejum', 'horario das refeicoes', 'que horas comer', 'crononutri', 'comer tarde', 'comer de noite'],
+      fonte: 'post "O horário que você come importa (e muito)"',
+      txt: 'Ela tem um conteúdo inteiro sobre isso: o horário em que você come importa, e muito. A Juliana trabalha com crononutrição, que é alinhar a alimentação com o metabolismo e com a sua rotina.' },
+    { id: 'restricao', rot: 'medo de dieta restritiva', k: ['cortar', 'proibi', 'restri', 'passar fome', 'dieta maluca', 'carboidrato', 'dieta dificil', 'comida cara'],
+      fonte: 'post "8 ou 80 na dieta?" e avaliações no Google',
+      txt: 'Não precisa ter esse medo. A proposta da Juliana é nutrição real e prática, sem 8 ou 80. Uma paciente resumiu bem na avaliação do Google: "alimentação totalmente acessível".' },
+    { id: 'prazo', rot: 'prazo de resultado', k: ['em quanto tempo', 'resultado rapido', 'quantos quilos', 'quanto tempo pra', 'quanto tempo para', 'quanto tempo leva'],
+      fonte: 'post "Constância não é sobre perfeição"',
+      txt: 'Prazo eu não consigo te prometer, e a Juliana também não promete: cada corpo responde de um jeito. O que ela sempre reforça é que constância não é sobre perfeição.' },
+    { id: 'avaliacoes', rot: 'avaliações de pacientes', k: ['avalia', 'recomend', 'ela e boa', 'confiavel', 'depoimento', 'opiniao', 'opinioes'],
+      fonte: 'perfil da Juliana no Google',
+      txt: 'No Google ela tem nota 5,0 em 13 avaliações. Os pacientes escrevem coisas como "excelente profissional, impossível não avaliar com 5 estrelas" e "recomendo pra todo mundo".' },
+    { id: 'quem', rot: 'forma de trabalho da Juliana', k: ['quem e a juliana', 'sobre a juliana', 'abordagem', 'metodo', 'como ela trabalha', 'linha dela', 'diferencial'],
+      fonte: 'bio do Instagram e perfil no Google',
+      txt: 'A Juliana resume o trabalho dela assim: transformar saúde e performance através da nutrição real e prática. Ela é nutricionista clínica e esportiva e faz um acompanhamento personalizado, pensando na saúde como um todo.' },
+    { id: 'formacao', rot: 'formação', k: ['formacao', 'formada', 'especiali', 'crn', 'faculdade'],
+      fonte: 'perfil da Juliana no Google',
+      txt: 'Ela é nutricionista clínica formada pelo IBMR (Instituto Brasileiro de Medicina e Reabilitação) e pós-graduada em Nutrição Esportiva pela NutMed.' },
+    { id: 'como', rot: 'como funciona a consulta', k: ['como funciona', 'como e a consulta', 'primeira consulta', 'como sao as consultas'],
+      fonte: 'Linktree e perfil no Google',
+      txt: 'A consulta pode ser presencial, aqui na Freguesia, ou online. A Juliana conversa sobre a sua rotina, o seu histórico e o que você quer alcançar, e a partir disso monta um acompanhamento personalizado, nada de dieta pronta.' },
+    { id: 'online', rot: 'atendimento online', k: [], fonte: 'Linktree',
+      txt: 'Dá sim! A Juliana atende online, por vídeo, com o mesmo acompanhamento do presencial.' },
+    { id: 'local', rot: 'endereço', k: ['endereco', 'onde fica', 'onde e', 'localiza', 'como chego', 'qual bairro'],
+      fonte: 'perfil da Juliana no Google',
+      txt: 'O consultório fica na ' + ENDERECO + '.' }
+  ];
+  var CONFIRMAR = [
+    ['valores', ['valor', 'preco', 'quanto custa', 'quanto e', 'quanto fica', 'investimento']],
+    ['convênio', ['convenio', 'plano de saude', 'reembolso', 'unimed', 'amil', 'sulamerica']],
+    ['formas de pagamento', ['pix', 'cartao', 'parcel', 'pagamento']],
+    ['duração e retorno', ['quanto tempo dura', 'duracao', 'retorno']],
+    ['exames e avaliação física', ['bioimped', 'exame', 'avaliacao fisica']],
+    ['atendimento para esse público', ['crianca', 'gestante', 'gravida', 'idoso', 'adolescente', 'meu filho', 'minha filha']],
+    ['estacionamento', ['estacionamento']],
+    ['horários de atendimento', ['que horas', 'horario de atendimento', 'sabado', 'funciona ate']]
+  ];
   var OBJ = [
     ['Emagrecimento', ['emagrec', 'perder peso', 'perder gordura', 'secar', 'quilos']],
     ['Nutrição esportiva', ['treino', 'trein', 'crossfit', 'corrida', 'correr', 'muscula', 'hipertrofia', 'performance', 'massa', 'academia', 'esport', 'maratona']],
     ['Acompanhamento com medicação', ['mounjaro', 'ozempic', 'wegovy', 'caneta', 'medica', 'semaglutida', 'tirzepatida']],
     ['Relação com a comida', ['compuls', 'ansiedade', 'belisc', 'descontrol', 'relacao com a comida', 'como demais']],
-    ['Saúde no dia a dia', ['saude', 'exame', 'colesterol', 'glicemia', 'alimentacao melhor', 'comer melhor', 'dia a dia']]
+    ['Saúde no dia a dia', ['saude', 'colesterol', 'glicemia', 'alimentacao melhor', 'comer melhor', 'dia a dia']]
   ];
+
+  /* ---------- entendimento da mensagem ---------- */
   function entender(texto) {
-    var t = norm(texto), achou = { campos: [], notas: [], duvidas: [] };
-    var m = texto.match(/(?:\b[Ss]ou (?:a|o)\s+|[Mm]e chamo\s+|[Mm]eu nome (?:e|é)\s+|[Aa]qui (?:e|é) (?:a|o)\s+)([A-Za-zÀ-ÿ]{2,}(?:\s+[A-ZÀ-Ý][a-zà-ÿ]+)?)/);
-    var nome = m ? m[1] : null;
-    if (!nome && S.esperando === 'nome' && /^[A-Za-zÀ-ÿ]{2,}(\s+[A-Za-zÀ-ÿ]{2,}){0,2}[.!]?$/.test(texto.trim()) && !/^(oi+|ola|olá|sim|nao|não|bom dia|boa tarde|boa noite)$/i.test(texto.trim())) { nome = texto.trim().replace(/[.!]$/, ''); }
-    if (nome && !S.nome) { S.nome = nome.charAt(0).toUpperCase() + nome.slice(1); achou.campos.push('nome'); achou.notas.push('nome ' + S.nome); }
+    var t = norm(texto), limpo = texto.trim(), achou = { campos: [], notas: [], t: t };
+    var pergunta = t.indexOf('?') !== -1;
+
+    achou.querAgendar = tem(t, ['agend', 'marcar', 'quero consulta', 'quero uma consulta', 'quero comecar', 'tem vaga', 'tem horario', 'quero sim']) ||
+      (S.ofereceu && /^(sim|quero|pode|bora|vamos|claro|por favor|gostaria|com certeza)\b/.test(t));
 
     var objs = [];
     OBJ.forEach(function (o) { if (tem(t, o[1]) && S.objetivo.indexOf(o[0]) === -1) { objs.push(o[0]); } });
-    if (!objs.length && S.esperando === 'objetivo' && texto.trim().length > 2 && t.indexOf('?') === -1) { objs.push(texto.trim().slice(0, 60)); }
+
+    var perguntaOnline = pergunta && /(atend\w*|faz\w*|tem|voces|vcs|da pra|da para)\b[^?]*on-?line/.test(t);
+    achou.temas = BASE.filter(function (b) { return b.id === 'online' ? perguntaOnline : tem(t, b.k); });
+    if (achou.temas.some(function (b) { return b.id === 'plato'; })) { achou.temas = achou.temas.filter(function (b) { return b.id !== 'emagrecer'; }); }
+    if ((S.querAgendar || achou.querAgendar) && !pergunta) { achou.temas = []; }
+    var novosTemas = achou.temas.filter(function (b) { return !S.ditos[b.id]; });
+    achou.temas = (novosTemas.length ? novosTemas : achou.temas).slice(0, 2);
+    achou.confirmar = CONFIRMAR.filter(function (c) { return tem(t, c[1]); }).map(function (c) { return c[0]; });
+
+    var m = texto.match(/(?:\b[Ss]ou (?:a|o)\s+|[Mm]e chamo\s+|[Mm]eu nome (?:e|é)\s+|[Aa]qui (?:e|é) (?:a|o)\s+|[Pp]ode me chamar de\s+)([A-Za-zÀ-ÿ]{2,}(?:\s+[A-ZÀ-Ý][a-zà-ÿ]+)?)/);
+    var nome = m ? m[1] : null;
+    var nadaMais = !objs.length && !achou.temas.length && !achou.confirmar.length && !achou.querAgendar;
+    var pareceNome = /^[A-Za-zÀ-ÿ]{2,}(\s+[A-Za-zÀ-ÿ]{2,}){0,2}[.!]?$/.test(limpo) && !/^(oi+|ola|olá|sim|nao|não|ok|certo|entendi|beleza|blz|valeu|tchau|quero|obrigad[oa]|muito obrigad[oa]|bom dia|boa tarde|boa noite|tenho outra d[uú]vida)[.!]?$/i.test(limpo);
+    if (!nome && !S.nome && nadaMais && pareceNome && (S.esperando === 'nome' || S.pediuNome || /^[A-ZÀ-Ý]/.test(limpo))) { nome = limpo.replace(/[.!]$/, ''); }
+    if (nome && !S.nome) { S.nome = nome.charAt(0).toUpperCase() + nome.slice(1); achou.campos.push('nome'); achou.notas.push('nome ' + S.nome); }
+
+    if (!objs.length && !nome && S.esperando === 'objetivo' && limpo.length > 2 && !pergunta && !achou.querAgendar && !/outra d[uú]vida/i.test(limpo)) { objs.push(limpo.slice(0, 60)); }
     if (objs.length) { S.objetivo = S.objetivo.concat(objs); achou.campos.push('objetivo'); achou.notas.push('objetivo: ' + objs.join(' e ')); }
 
-    var perguntaOnline = t.indexOf('?') !== -1 && /(atend\w*|faz\w*|tem|voces|vcs)\b[^?]*on-?line/.test(t);
     if (!S.formato) {
       if (/on-?line|por video|a distancia/.test(t) && !perguntaOnline) { S.formato = 'Online'; }
-      else if (tem(t, ['presencial', 'consultorio', 'pessoalmente', 'ir ai', 'na freguesia'])) { S.formato = 'Presencial na Freguesia'; }
+      else if (tem(t, ['presencial', 'consultorio', 'pessoalmente', 'ir ai', 'na freguesia']) && !pergunta) { S.formato = 'Presencial na Freguesia'; }
       if (S.formato) { achou.campos.push('formato'); achou.notas.push('atendimento ' + S.formato.toLowerCase()); }
     }
     if (!S.periodo) {
@@ -293,30 +364,17 @@ ul,ol{list-style:none}
       if (tem(tp, ['manha', 'cedo'])) { S.periodo = 'Manhã'; }
       else if (tem(tp, ['tarde', 'almoco'])) { S.periodo = 'Tarde'; }
       else if (tem(tp, ['tanto faz', 'qualquer horario', 'qualquer periodo'])) { S.periodo = 'Manhã ou tarde'; }
-      else if (tem(tp, ['noite', 'depois das 18', 'apos as 18', 'depois do trabalho'])) { achou.noite = true; achou.notas.push('pediu horário à noite'); }
+      else if (tem(tp, ['noite', 'depois das 18', 'apos as 18', 'depois do trabalho']) && (S.querAgendar || achou.querAgendar)) { achou.noite = true; achou.notas.push('pediu horário à noite'); }
       if (S.periodo) { achou.campos.push('periodo'); achou.notas.push('prefere ' + S.periodo.toLowerCase()); }
     }
 
-    if (perguntaOnline) { achou.duvidas.push('online'); }
-    if (tem(t, ['endereco', 'onde fica', 'onde e', 'localiza', 'como chego'])) { achou.duvidas.push('local'); }
-    if (tem(t, ['valor', 'preco', 'quanto custa', 'quanto e', 'quanto fica'])) { achou.duvidas.push('valores'); }
-    if (tem(t, ['convenio', 'plano de saude', 'reembolso', 'unimed', 'amil', 'sulamerica'])) { achou.duvidas.push('convenio'); }
-    if (tem(t, ['formacao', 'formada', 'especiali', 'crn'])) { achou.duvidas.push('formacao'); }
-    if (tem(t, ['como funciona'])) { achou.duvidas.push('como'); }
-    if (tem(t, ['dieta', 'cardapio', 'o que comer', 'posso comer', 'o que eu como', 'quantas calorias', 'jejum'])) { achou.pedeDieta = true; }
-    if (tem(t, ['dor forte', 'passando mal', 'emergencia', 'desmai'])) { achou.urgente = true; }
-    achou.perguntaPessoa = t.indexOf('?') !== -1 && /\b(robo|bot|ia|inteligencia artificial|maquina|humano|humana|pessoa|gente de verdade|atendente)\b/.test(t) && /\b(voce|vc|e um|e uma|falando com|sou atendid)/.test(t);
+    achou.pedeDieta = /(me passa|me manda|me da|monta|quero)\b.*(dieta|cardapio)|o que (eu )?(devo |posso )?com(er|o)\b|quantas calorias/.test(t);
+    achou.urgente = tem(t, ['dor forte', 'passando mal', 'emergencia', 'desmai']);
+    achou.perguntaPessoa = pergunta && /\b(robo|bot|ia|inteligencia artificial|maquina|humano|humana|pessoa|gente de verdade|atendente)\b/.test(t) && /\b(voce|vc|e um|e uma|falando com|sou atendid)/.test(t);
     achou.saudacao = /^(oi+|ola|bom dia|boa tarde|boa noite|opa|e ai)\b/.test(t);
-    achou.t = t;
+    achou.outraDuvida = tem(t, ['outra duvida', 'tenho uma duvida', 'mais uma duvida', 'outra pergunta']);
     return achou;
   }
-
-  var RESPOSTA = {
-    online: 'Sim, a Juliana atende online, por vídeo, com o mesmo acompanhamento do presencial.',
-    local: 'O consultório fica na ' + ENDERECO + '.',
-    formacao: 'A Juliana é nutricionista clínica formada pelo IBMR e pós-graduada em Nutrição Esportiva pela NutMed.',
-    como: 'Você agenda por aqui, faz a consulta (presencial ou online) e recebe um plano alimentar personalizado, com acompanhamento.'
-  };
 
   /* ---------- agenda simulada ---------- */
   function horarios() {
@@ -341,22 +399,28 @@ ul,ol{list-style:none}
     return null;
   }
   var PERGUNTA = {
-    nome: ['Para eu cuidar do seu atendimento, como você se chama?', null],
-    objetivo: ['Me conta: qual é o seu principal objetivo com a consulta?', ['Emagrecimento', 'Treino e performance', 'Uso medicação para emagrecer', 'Relação com a comida']],
-    formato: ['Você prefere atendimento presencial, na Freguesia, ou online?', ['Presencial', 'Online']],
-    periodo: ['Qual período é melhor para você?', ['Manhã', 'Tarde', 'Tanto faz']]
+    nome: ['Com prazer! Pra eu reservar direitinho, como posso te chamar?', null],
+    objetivo: ['Perfeito. Só pra Juliana já chegar preparada: qual é o seu principal objetivo hoje?', ['Emagrecimento', 'Treino e performance', 'Uso medicação para emagrecer', 'Relação com a comida']],
+    formato: ['Você prefere vir ao consultório, aqui na Freguesia, ou fazer online?', ['Presencial', 'Online']],
+    periodo: ['E qual período costuma ser melhor pra você?', ['Manhã', 'Tarde', 'Tanto faz']]
   };
+  function sugestoes() {
+    var todas = [['Como funciona a consulta?', 'como'], ['Ela atende online?', 'online'], ['Onde fica o consultório?', 'local'], ['Ela é bem avaliada?', 'avaliacoes']];
+    return todas.filter(function (s) { return !S.ditos[s[1]]; }).slice(0, 2).map(function (s) { return s[0]; }).concat(['Quero agendar']);
+  }
 
   function oferecer(prefixo) {
     var li;
-    passo(500, function () { li = registro('rodando', 'Consultando a agenda da Juliana', 'Procurando horários livres: ' + S.periodo.toLowerCase() + ', ' + S.formato.toLowerCase() + '.', true); });
-    passo(1400, function () {
+    if (prefixo) { dizer(prefixo); }
+    dizer('Deixa eu olhar a agenda dela pra você, só um instante.');
+    passo(400, function () { li = registro('rodando', 'Consultando a agenda da Juliana', 'Procurando horários livres: ' + S.periodo.toLowerCase() + ', ' + S.formato.toLowerCase() + '.', true); });
+    passo(1600, function () {
       S.opcoes = horarios(); S.fase = 'oferta'; S.status = 'Escolhendo horário'; ficha(['status']);
       li.className = 'agir';
       li.querySelector('span').textContent = 'Encontrou 2 horários livres e separou para oferecer.';
     });
     passo(10, function () {
-      dizer((prefixo ? prefixo + '\n\n' : '') + 'Consultei a agenda e encontrei dois horários:\n\n1. ' + S.opcoes[0] + '\n2. ' + S.opcoes[1] + '\n\nQual fica melhor?', { botoes: ['Quero o 1', 'Quero o 2', 'Nenhum serve'] });
+      dizer('Achei dois horários:\n\n1. ' + S.opcoes[0] + '\n2. ' + S.opcoes[1] + '\n\nAlgum deles fica bom pra você?', { botoes: ['Quero o 1', 'Quero o 2', 'Nenhum serve'] });
     });
   }
 
@@ -365,24 +429,28 @@ ul,ol{list-style:none}
     var primeiro = S.nome.split(' ')[0];
     var resumo = 'Nome: ' + S.nome + '\nObjetivo: ' + S.objetivo.join(', ') + '\nAtendimento: ' + S.formato + '\nHorário: ' + S.horario;
     passo(600, function () { registro('agir', 'Reservou o horário na agenda', S.horario + ', ' + S.formato.toLowerCase() + '.', true); ficha(['horario', 'status']); });
-    anotar(700, 'agir', 'Salvou a ficha no CRM', 'Paciente novo, com objetivo e origem do contato.', true);
+    anotar(700, 'agir', 'Salvou a ficha no CRM', 'Paciente novo, com objetivo, dúvidas da conversa e origem do contato.', true);
     passo(700, function () {
       registro('agir', 'Programou as próximas tarefas', 'Lembrete, formulário pré-consulta e retorno em caso de falta.', true);
       $('sem-tarefas').hidden = true; var ul = $('tarefas'); ul.textContent = '';
       ['Lembrete 24 horas antes da consulta', 'Formulário pré-consulta enviado ao paciente', 'Nova tentativa se o paciente não confirmar', 'Pedido de avaliação no Google após a consulta'].forEach(function (x) { ul.appendChild(el('li', '', x)); });
     });
     anotar(700, 'humano', 'Avisou a Juliana', 'Enviou o resumo pronto para ela só confirmar.', true);
-    dizer('Reservado, ' + primeiro + '! Ficou assim:\n\n' + resumo + '\n\nA Juliana confirma com você por aqui, e eu te lembro um dia antes.', {
-      link: { url: 'https://wa.me/' + WHATS + '?text=' + encodeURIComponent('Olá, Juliana! Novo pré-agendamento feito pelo atendimento:\n' + resumo), rotulo: 'Ver a mensagem que a Juliana recebe' },
-      botoes: ['Onde fica o consultório?', 'Como funciona a consulta?']
+    dizer('Prontinho, ' + primeiro + ', deixei reservado:\n\n' + resumo, {
+      link: { url: 'https://wa.me/' + WHATS + '?text=' + encodeURIComponent('Olá, Juliana! Novo pré-agendamento feito pelo atendimento:\n' + resumo), rotulo: 'Ver a mensagem que a Juliana recebe' }
     });
+    dizer('A Juliana confirma com você por aqui, e eu te lembro um dia antes. Qualquer dúvida até lá, é só me chamar.', { botoes: sugestoes().slice(0, 2) });
   }
 
   function agir(texto) {
-    var a = entender(texto), partes = [], decisao;
+    var a = entender(texto), partes = [], decisao, fecho, bts;
+    if (a.querAgendar) { S.querAgendar = true; }
+    var primeiro = S.nome ? S.nome.split(' ')[0] : '';
 
     var leitura = a.notas.slice();
-    a.duvidas.forEach(function (d) { leitura.push('dúvida sobre ' + ({ online: 'atendimento online', local: 'endereço', valores: 'valores', convenio: 'convênio', formacao: 'formação', como: 'como funciona' })[d]); });
+    a.temas.forEach(function (b) { leitura.push('dúvida sobre ' + b.rot); });
+    a.confirmar.forEach(function (c) { leitura.push('dúvida sobre ' + c); });
+    if (a.querAgendar && S.fase === 'coleta') { leitura.push('quer agendar'); }
     if (a.pedeDieta) { leitura.push('pedido de orientação alimentar'); }
     if (a.urgente) { leitura.push('possível urgência de saúde'); }
     if (a.perguntaPessoa) { leitura.push('pergunta sobre quem está atendendo'); }
@@ -401,59 +469,95 @@ ul,ol{list-style:none}
       return;
     }
 
-    a.duvidas.forEach(function (d) {
-      if (RESPOSTA[d]) { partes.push(RESPOSTA[d]); }
-      else { partes.push(d === 'valores' ? 'Os valores eu confirmo com a Juliana e te passo em seguida.' : 'Sobre convênio e reembolso, eu confirmo com a Juliana e te respondo.'); }
-    });
-    var conhecidas = a.duvidas.filter(function (d) { return RESPOSTA[d]; }).length;
-    if (conhecidas) { anotar(300, 'agir', 'Consultou as informações da Juliana', 'Respondeu ' + conhecidas + (conhecidas > 1 ? ' dúvidas' : ' dúvida') + ' com dados confirmados.'); }
-    if (a.duvidas.length > conhecidas) { anotar(300, 'humano', 'Pediu confirmação à Juliana', 'Informação ainda não cadastrada (entra na versão final).', true); }
+    if (a.temas.length) {
+      a.temas.forEach(function (b) { partes.push(b.txt); S.ditos[b.id] = true; });
+      anotar(300, 'agir', 'Consultou as informações da Dra. Juliana', 'Fonte: ' + a.temas.map(function (b) { return b.fonte; }).join('; ') + '.');
+    }
+    if (a.confirmar.length) {
+      anotar(300, 'humano', 'Pediu confirmação à Juliana', 'Ainda não cadastrado: ' + a.confirmar.join(', ') + ' (entra na versão final).', true);
+      partes.push('Sobre ' + a.confirmar.join(' e ') + ', eu prefiro confirmar com a Juliana pra te passar certinho. Já te respondo por aqui.');
+    }
     if (a.perguntaPessoa) {
       anotar(300, 'regra', 'Respondeu com transparência', 'Quando o paciente pergunta quem atende, a resposta é verdadeira.');
       partes.push('Sou o assistente digital do consultório da Juliana. Cuido das dúvidas e do agendamento, e ela acompanha tudo de perto.');
     }
     if (a.pedeDieta) {
       anotar(300, 'regra', 'Aplicou uma regra da profissão', 'Não passa dieta nem orientação alimentar pelo chat.');
-      partes.push('Dieta e orientação alimentar eu não passo por aqui: isso depende de avaliação individual, que é o que a Juliana faz na consulta.');
+      partes.push('Dieta e cardápio eu não consigo te passar por aqui, porque isso depende de uma avaliação só sua. É exatamente o que a Juliana faz na consulta.');
     }
     if (a.noite) {
       anotar(300, 'humano', 'Pediu confirmação à Juliana', 'Horário à noite não está na agenda cadastrada.', true);
-      partes.push('Horário à noite eu preciso confirmar com a Juliana, já deixei o pedido com ela. Por enquanto tenho manhã e tarde.');
+      partes.push('Horário à noite eu preciso confirmar com a Juliana, já deixei o pedido com ela. Por enquanto consigo te oferecer manhã e tarde.');
     }
+    var teveResposta = partes.length > 0;
 
     if (S.fase === 'oferta') {
       if (esc !== -1) { reservar(esc); return; }
-      if (tem(a.t, ['nenhum', 'nao serve', 'nao consigo', 'outro'])) {
+      if (tem(a.t, ['nenhum', 'nao serve', 'nao consigo', 'outro horario', 'outro dia'])) {
         anotar(300, 'humano', 'Passou para a Juliana', 'Paciente precisa de um horário fora dos disponíveis.', true);
-        dizer((partes.length ? partes.join('\n\n') + '\n\n' : '') + 'Sem problema. Passei seu pedido para a Juliana encontrar um horário que funcione, e ela te chama por aqui.');
+        dizer((teveResposta ? partes.join('\n\n') + '\n\n' : '') + 'Sem problema nenhum. Passei seu pedido para a Juliana encontrar um horário que funcione, e ela te chama por aqui.');
         S.status = 'Aguardando a Juliana'; passo(10, function () { ficha(['status']); });
         return;
       }
-      dizer((partes.length ? partes.join('\n\n') + '\n\n' : '') + 'Qual dos dois horários fica melhor para você?', { botoes: ['Quero o 1', 'Quero o 2', 'Nenhum serve'] });
+      if (teveResposta) { dizer(partes.join('\n\n')); }
+      dizer('E sobre os horários, algum dos dois fica bom pra você?', { botoes: ['Quero o 1', 'Quero o 2', 'Nenhum serve'] });
       return;
     }
     if (S.fase === 'fechado') {
-      dizer(partes.length ? partes.join('\n\n') : 'Seu horário está reservado para ' + S.horario + '. Se precisar remarcar, é só me avisar.');
+      dizer(teveResposta ? partes.join('\n\n') : 'Seu horário está reservado para ' + S.horario + '. Se precisar remarcar, é só me avisar.', { botoes: sugestoes().slice(0, 2) });
       return;
     }
 
-    decisao = faltando();
-    S.esperando = decisao;
-    if (!partes.length && !a.campos.length && !a.saudacao && !a.noite) {
-      anotar(300, 'humano', 'Encaminhou a pergunta para a Juliana', 'Preferiu não responder sem informação confirmada.', true);
-      partes.push('Essa eu prefiro confirmar com a Juliana para não te passar nada errado. Já encaminhei.');
+    /* paciente quer agendar: só agora o atendimento coleta o que falta */
+    if (S.querAgendar) {
+      decisao = faltando();
+      S.esperando = decisao;
+      if (teveResposta) { dizer(partes.join('\n\n')); }
+      if (decisao) {
+        anotar(300, 'regra', 'Decidiu o próximo passo', 'Paciente quer agendar. Falta ' + ({ nome: 'o nome', objetivo: 'o objetivo', formato: 'o formato de atendimento', periodo: 'o período preferido' })[decisao] + '.');
+        dizer((a.campos.indexOf('nome') !== -1 ? 'Prazer, ' + primeiro + '! ' : '') + PERGUNTA[decisao][0], { botoes: PERGUNTA[decisao][1] });
+      } else {
+        anotar(300, 'regra', 'Decidiu o próximo passo', 'Ficha completa: pode consultar a agenda.');
+        oferecer(a.campos.indexOf('nome') !== -1 ? 'Prazer, ' + primeiro + '!' : (teveResposta ? '' : 'Que bom' + (primeiro ? ', ' + primeiro : '') + '!'));
+      }
+      return;
     }
-    var abertura = (a.campos.indexOf('nome') !== -1 || a.saudacao) && S.nome ? 'Oi, ' + S.nome.split(' ')[0] + '! ' : (a.saudacao ? 'Oi! ' : '');
-    if (a.campos.indexOf('objetivo') !== -1 && tem(norm(S.objetivo.join(' ')), ['medicacao', 'esportiva'])) {
-      partes.unshift('A Juliana acompanha quem treina e também quem usa medicação para emagrecer com prescrição médica.');
+
+    /* modo conversa: tira dúvidas sem empurrar o agendamento */
+    if (teveResposta) { S.respondidas += 1; }
+    if (!teveResposta) {
+      if (a.campos.indexOf('nome') !== -1 && a.campos.length === 1) {
+        S.esperando = 'objetivo';
+        anotar(300, 'regra', 'Decidiu o próximo passo', 'Conhecer o motivo do contato antes de qualquer oferta.');
+        dizer('Prazer, ' + primeiro + '! Me conta, o que te fez procurar a Juliana?');
+        return;
+      }
+      if (a.outraDuvida) { dizer('Claro, pode perguntar à vontade.'); return; }
+      if (a.saudacao && !a.campos.length) {
+        dizer('Oi' + (primeiro ? ', ' + primeiro : '') + '! Tudo bem? Me conta, como posso te ajudar?', { botoes: sugestoes() });
+        return;
+      }
+      if (a.campos.length) { partes.push('Entendi' + (primeiro ? ', ' + primeiro : '') + '. Obrigado por me contar, já anotei aqui pra Juliana.'); }
+      else {
+        anotar(300, 'humano', 'Encaminhou a pergunta para a Juliana', 'Preferiu não responder sem informação confirmada.', true);
+        partes.push('Essa eu prefiro confirmar com a Juliana pra não te passar nada errado. Já encaminhei pra ela e te respondo por aqui.');
+      }
     }
-    if (decisao) {
-      anotar(300, 'regra', 'Decidiu o próximo passo', 'Falta ' + ({ nome: 'o nome', objetivo: 'o objetivo', formato: 'o formato de atendimento', periodo: 'o período preferido' })[decisao] + ' para poder agendar.');
-      dizer(abertura + (partes.length ? partes.join('\n\n') + '\n\n' : '') + PERGUNTA[decisao][0], { botoes: PERGUNTA[decisao][1] });
+    if (!S.nome && !S.pediuNome) {
+      S.esperando = 'nome'; S.pediuNome = true;
+      fecho = 'A propósito, como posso te chamar?'; bts = null;
+      anotar(300, 'regra', 'Decidiu o próximo passo', 'Perguntar o nome para personalizar a conversa, sem falar de agendamento ainda.');
+    } else if (S.respondidas >= 3 && !S.ofereceu) {
+      S.ofereceu = true; S.esperando = null;
+      fecho = 'Se fizer sentido pra você' + (primeiro ? ', ' + primeiro : '') + ', eu posso ver um horário com a Juliana. Quer que eu olhe?'; bts = ['Quero sim', 'Tenho outra dúvida'];
+      anotar(300, 'regra', 'Decidiu o próximo passo', 'Paciente já tirou as principais dúvidas: oferecer um horário, sem pressão.');
     } else {
-      anotar(300, 'regra', 'Decidiu o próximo passo', 'Ficha completa: pode consultar a agenda.');
-      oferecer(abertura + partes.join('\n\n'));
+      S.esperando = S.objetivo.length ? null : 'objetivo';
+      fecho = S.objetivo.length ? 'Ficou mais alguma dúvida? Pode perguntar à vontade.' : 'E me conta, qual é o seu objetivo hoje?'; bts = sugestoes();
+      anotar(300, 'regra', 'Decidiu o próximo passo', 'Continuar tirando dúvidas, sem forçar o agendamento.');
     }
+    dizer((a.campos.indexOf('nome') !== -1 ? 'Prazer, ' + primeiro + '! ' : '') + partes.join('\n\n'));
+    dizer(fecho, { botoes: bts });
   }
 
   function paciente(texto) {
@@ -466,28 +570,32 @@ ul,ol{list-style:none}
 
   /* ---------- demonstração automática ---------- */
   var ROTEIRO = [
-    'Oi, boa noite! Sou a Carla. Treino crossfit 5x por semana e estou usando Mounjaro, queria ajuda pra não perder massa. Vocês atendem online?',
-    'Online mesmo. De manhã é melhor pra mim',
+    'Oi, boa noite! Queria tirar umas dúvidas. Estou usando Mounjaro e treino crossfit, tenho medo de perder massa. A Juliana atende esse tipo de caso?',
+    'Sou a Carla. E como funciona a consulta? Dá pra fazer online?',
+    'Ela é bem avaliada? E quanto custa?',
+    'Quero sim! Online, de manhã',
     'Pode ser o primeiro'
   ];
   function esperar(ms, g) { return new Promise(function (ok) { window.setTimeout(ok, ms); }).then(function () { return g === gen; }); }
+  function ocioso() { var f = fila; return f.then(function () { return f === fila ? true : ocioso(); }); }
   function tocar() {
     comecar(); tocando = true; $('auto').disabled = true;
     var g = gen, p = Promise.resolve(true);
     ROTEIRO.forEach(function (fala) {
-      p = p.then(function (vivo) { return vivo && fila.then(function () { return esperar(1500, g); }); })
+      p = p.then(function (vivo) { return vivo && ocioso().then(function () { return esperar(1800, g); }); })
            .then(function (vivo) { if (vivo) { paciente(fala); } return vivo; });
     });
-    p.then(function (vivo) { return vivo && fila; }).then(function () { if (g === gen) { tocando = false; $('auto').disabled = false; } });
+    p.then(function (vivo) { return vivo && ocioso(); }).then(function () { if (g === gen) { tocando = false; $('auto').disabled = false; } });
   }
 
   function comecar() {
     gen += 1; fila = Promise.resolve(); tocando = false; novos = 0;
-    S = { nome: '', objetivo: [], formato: '', periodo: '', horario: '', status: 'Em atendimento', fase: 'coleta', esperando: null, opcoes: null };
+    S = { nome: '', objetivo: [], formato: '', periodo: '', horario: '', status: 'Em atendimento', fase: 'coleta', esperando: null, opcoes: null, querAgendar: false, ofereceu: false, pediuNome: false, respondidas: 0, ditos: {} };
     log.textContent = ''; trail.textContent = ''; $('tarefas').textContent = ''; $('badge').textContent = '';
     $('vazio').hidden = false; $('sem-tarefas').hidden = false; $('auto').disabled = false;
     botoes([]); ficha();
-    dizer('Olá! Aqui é do atendimento da nutricionista Juliana Leanza. Pode me escrever do seu jeito: eu tiro suas dúvidas e já deixo sua consulta encaminhada.');
+    dizer('Olá! Tudo bem? Aqui é do atendimento da nutricionista Juliana Leanza.');
+    dizer('Pode me perguntar o que quiser sobre o trabalho dela e sobre as consultas. Como posso te ajudar?', { botoes: sugestoes() });
   }
 
   $('composer').addEventListener('submit', function (e) { e.preventDefault(); var v = campo.value; campo.value = ''; if (!tocando) { paciente(v); } });
